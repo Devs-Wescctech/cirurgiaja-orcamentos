@@ -8,7 +8,7 @@ POSTGRES_HOST = "172.16.0.24"
 POSTGRES_PORT = 5432
 POSTGRES_DB = "postgres"
 POSTGRES_USER = "sup_cristian"
-POSTGRES_PASSWORD = "SUA_SENHA_AQUI"
+POSTGRES_PASSWORD = "17qysrutiov35W"
 
 TABELA = "public.orcamentos_cirurgiaja"
 # ====================================
