@@ -1,35 +1,28 @@
 from flask import Flask, request, jsonify
 import psycopg2
-import os
 
 app = Flask(__name__)
 
-TABELA = os.getenv("ORCAMENTOS_TABELA", "public.orcamentos_cirurgiaja")
+# ====== CONFIG FIXA (HARDCODE) ======
+POSTGRES_HOST = "172.16.0.24"
+POSTGRES_PORT = 5432
+POSTGRES_DB = "postgres"
+POSTGRES_USER = "sup_cristian"
+POSTGRES_PASSWORD = "SUA_SENHA_AQUI"
+
+TABELA = "public.orcamentos_cirurgiaja"
+# ====================================
+
 
 def conectar():
-    host = os.getenv("POSTGRES_HOST")
-    db = os.getenv("POSTGRES_DB")
-    user = os.getenv("POSTGRES_USER")
-    pwd = os.getenv("POSTGRES_PASSWORD")
-    port = int(os.getenv("POSTGRES_PORT", "5432"))
-
-    missing = [k for k, v in {
-        "POSTGRES_HOST": host,
-        "POSTGRES_DB": db,
-        "POSTGRES_USER": user,
-        "POSTGRES_PASSWORD": pwd
-    }.items() if not v]
-
-    if missing:
-        raise Exception(f"Faltam variáveis de ambiente: {', '.join(missing)}")
-
     return psycopg2.connect(
-        host=host,
-        database=db,
-        user=user,
-        password=pwd,
-        port=port
+        host=POSTGRES_HOST,
+        database=POSTGRES_DB,
+        user=POSTGRES_USER,
+        password=POSTGRES_PASSWORD,
+        port=POSTGRES_PORT
     )
+
 
 def normalizar_nome(v):
     if v is None:
@@ -37,9 +30,11 @@ def normalizar_nome(v):
     v2 = v.strip()
     return v2 if v2 else None
 
+
 @app.route("/", methods=["GET"])
 def home():
     return jsonify({"status": "API rodando", "service": "orcamentos-cirurgiaja"})
+
 
 @app.route("/orcamento", methods=["GET"])
 def buscar_orcamento_por_nome():
@@ -47,7 +42,7 @@ def buscar_orcamento_por_nome():
     Buscar imagem do orçamento pelo nome do procedimento:
       /orcamento?nome=Hemorroida
 
-    Por padrão faz busca case-insensitive:
+    Por padrão faz busca case-insensitive (ignorando maiúsc/minúsc):
       lower(nome) = lower(%s)
 
     Se quiser buscar exato (case-sensitive):
@@ -81,6 +76,7 @@ def buscar_orcamento_por_nome():
             cur.execute(sql, (nome,))
 
         row = cur.fetchone()
+
         cur.close()
         conn.close()
 
@@ -91,6 +87,7 @@ def buscar_orcamento_por_nome():
 
     except Exception as e:
         return jsonify({"erro": str(e)}), 500
+
 
 @app.route("/orcamento/existe", methods=["GET"])
 def existe_orcamento():
@@ -123,6 +120,7 @@ def existe_orcamento():
     except Exception as e:
         return jsonify({"erro": str(e)}), 500
 
+
 @app.route("/orcamentos", methods=["GET"])
 def listar_orcamentos():
     """
@@ -150,5 +148,7 @@ def listar_orcamentos():
     except Exception as e:
         return jsonify({"erro": str(e)}), 500
 
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", debug=True, port=int(os.getenv("PORT", "5000")))
+    # Para teste local (em prod você usa gunicorn)
+    app.run(host="0.0.0.0", debug=True, port=5000)
